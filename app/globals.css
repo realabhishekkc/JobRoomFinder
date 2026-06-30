@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------ *
+ * Design tokens — §4
+ * Rooted in the Nepali flag (sindoor crimson, himal blue) + festival
+ * materials (marigold). Stored as RGB channel triples so Tailwind's
+ * <alpha-value> slot works. Dark mode uses the same hues at adjusted
+ * lightness on a true near-black ground.
+ * ------------------------------------------------------------------ */
+:root {
+  --paper: 247 241 230; /* #F7F1E6 warm paper */
+  --paper-raised: 255 253 248; /* #FFFDF8 */
+  --ink: 28 23 20; /* #1C1714 warm near-black text */
+  --ink-soft: 92 82 72; /* #5C5248 muted */
+  --line: 226 215 196; /* #E2D7C4 hairline */
+
+  --crimson: 192 16 46; /* #C0102E flag crimson */
+  --crimson-deep: 143 11 34; /* #8F0B22 */
+  --marigold: 217 138 31; /* #D98A1F festival marigold */
+  --marigold-soft: 246 198 103; /* #F6C667 */
+  --himal: 30 58 110; /* #1E3A6E himal blue */
+  --jade: 33 110 78; /* #216E4E */
+
+  /* lungta (prayer-flag) five colours — vivid, for the accent strip only */
+  --flag-blue: 0 86 167;
+  --flag-white: 244 240 232;
+  --flag-red: 200 24 47;
+  --flag-green: 36 138 92;
+  --flag-yellow: 240 176 38;
+
+  color-scheme: light;
+}
+
+.dark {
+  --paper: 14 12 10; /* #0E0C0A true near-black */
+  --paper-raised: 26 22 19; /* #1A1613 */
+  --ink: 240 233 220; /* #F0E9DC */
+  --ink-soft: 168 155 138; /* #A89B8A */
+  --line: 46 39 34; /* #2E2722 */
+
+  --crimson: 232 90 110; /* lightened for AA on dark */
+  --crimson-deep: 200 60 82;
+  --marigold: 240 178 77;
+  --marigold-soft: 120 86 36;
+  --himal: 122 158 214;
+  --jade: 90 190 140;
+
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+    /* faint paper grain — set on body via the .paper-grain util below */
+  }
+  /* Visible, branded focus ring for keyboard users — WCAG */
+  :focus-visible {
+    @apply outline-none ring-2 ring-crimson ring-offset-2;
+    --tw-ring-offset-color: rgb(var(--paper));
+  }
+  ::selection {
+    background: rgb(var(--marigold-soft));
+    color: rgb(var(--ink));
+  }
+  h1, h2, h3, h4 {
+    @apply font-display;
+    text-wrap: balance;
+  }
+}
+
+@layer utilities {
+  /* Paper-grain texture at ~3% opacity (§4). Fixed so it doesn't scroll. */
+  .paper-grain::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Aankhi-jhyal (Newari lattice) — very faint section divider / header texture. */
+  .lattice {
+    background-color: transparent;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cg fill='none' stroke='%23000' stroke-width='1'%3E%3Cpath d='M14 0v28M0 14h28M0 0l28 28M28 0L0 28'/%3E%3Ccircle cx='14' cy='14' r='5'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 28px 28px;
+    opacity: 0.05;
+  }
+  .dark .lattice {
+    filter: invert(1);
+    opacity: 0.06;
+  }
+
+  /* Light glassmorphism — sponsor banner + sticky filter bar ONLY (§4). */
+  .glass {
+    background: rgb(var(--paper-raised) / 0.72);
+    backdrop-filter: saturate(140%) blur(10px);
+    -webkit-backdrop-filter: saturate(140%) blur(10px);
+  }
+
+  .hairline {
+    @apply border border-line;
+  }
+
+  /* keeps content above the fixed paper-grain layer */
+  .above-grain {
+    position: relative;
+    z-index: 1;
+  }
+}
