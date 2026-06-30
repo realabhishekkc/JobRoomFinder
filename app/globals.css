@@ -30,6 +30,13 @@
   --flag-green: 36 138 92;
   --flag-yellow: 240 176 38;
 
+  /* Layered elevation — warm shadows for a soft, dimensional feel. */
+  --shadow-1: 0 1px 2px rgb(58 42 30 / 0.06), 0 2px 6px -2px rgb(58 42 30 / 0.10);
+  --shadow-2: 0 2px 4px rgb(58 42 30 / 0.05), 0 12px 28px -10px rgb(58 42 30 / 0.18);
+  --shadow-3: 0 4px 10px rgb(58 42 30 / 0.07), 0 28px 56px -18px rgb(58 42 30 / 0.26);
+  /* Inset top highlight that sells the "lifted" 3D edge on raised surfaces. */
+  --edge: inset 0 1px 0 0 rgb(255 255 255 / 0.6);
+
   color-scheme: light;
 }
 
@@ -46,6 +53,12 @@
   --marigold-soft: 120 86 36;
   --himal: 122 158 214;
   --jade: 90 190 140;
+
+  /* On near-black, shadows read as deeper ambient pools. */
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4), 0 2px 6px -2px rgb(0 0 0 / 0.5);
+  --shadow-2: 0 2px 6px rgb(0 0 0 / 0.45), 0 14px 30px -10px rgb(0 0 0 / 0.6);
+  --shadow-3: 0 6px 14px rgb(0 0 0 / 0.5), 0 32px 60px -18px rgb(0 0 0 / 0.7);
+  --edge: inset 0 1px 0 0 rgb(255 255 255 / 0.06);
 
   color-scheme: dark;
 }
@@ -106,6 +119,58 @@
 
   .hairline {
     @apply border border-line;
+  }
+
+  /* Elevation scale */
+  .elev-1 { box-shadow: var(--shadow-1); }
+  .elev-2 { box-shadow: var(--shadow-2); }
+  .elev-3 { box-shadow: var(--shadow-3); }
+
+  /* Raised surface with a soft 3D edge highlight + shadow. */
+  .surface {
+    background: rgb(var(--paper-raised));
+    box-shadow: var(--edge), var(--shadow-2);
+  }
+
+  /* Card that lifts on hover/focus — the core "modern, dimensional" feel. */
+  .lift {
+    box-shadow: var(--edge), var(--shadow-1);
+    transition: transform 200ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      box-shadow 200ms ease, border-color 200ms ease;
+    will-change: transform;
+  }
+  .lift:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--edge), var(--shadow-3);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lift { transition: box-shadow 200ms ease, border-color 200ms ease; }
+    .lift:hover { transform: none; }
+  }
+
+  /* Warm brand glow — a soft radial wash in brand hues (never purple/blue). */
+  .brand-glow::after {
+    content: "";
+    position: absolute;
+    inset: -20% -10% auto -10%;
+    height: 70%;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(40% 60% at 72% 28%, rgb(var(--marigold) / 0.18), transparent 70%),
+      radial-gradient(46% 64% at 28% 16%, rgb(var(--crimson) / 0.12), transparent 72%);
+    filter: blur(8px);
+  }
+
+  /* 3D perspective stage + tactile button sheen */
+  .stage { perspective: 1400px; }
+  .preserve-3d { transform-style: preserve-3d; }
+  .sheen {
+    background-image: linear-gradient(
+      to bottom,
+      rgb(255 255 255 / 0.16),
+      rgb(255 255 255 / 0) 42%
+    );
   }
 
   /* keeps content above the fixed paper-grain layer */

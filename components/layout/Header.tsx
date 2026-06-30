@@ -15,7 +15,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 above-grain">
       <LungtaStrip />
-      <div className="glass border-b border-line">
+      <div className="border-b border-line bg-paper-raised/90 backdrop-blur-md elev-1">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
           <Logo />
 

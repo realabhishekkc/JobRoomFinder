@@ -17,17 +17,17 @@ export function PostCardShell({
   return (
     <article
       className={cn(
-        "group relative flex flex-col rounded-card bg-paper-raised p-4 transition-colors",
+        "lift group relative flex flex-col rounded-card bg-paper-raised p-5",
         promoted
-          ? "border border-marigold/50 ring-1 ring-marigold/30 bg-marigold/[0.04]"
-          : "hairline hover:border-crimson/30",
+          ? "border border-marigold/50 bg-marigold/[0.05] hover:border-marigold/70"
+          : "border border-line hover:border-crimson/30",
         className
       )}
     >
       {promoted ? (
         <span
           aria-hidden
-          className="absolute inset-x-0 top-0 h-0.5 rounded-t-card bg-gradient-to-r from-marigold-soft via-marigold to-crimson"
+          className="absolute inset-x-0 top-0 h-1 rounded-t-card bg-gradient-to-r from-marigold-soft via-marigold to-crimson"
         />
       ) : null}
       {children}

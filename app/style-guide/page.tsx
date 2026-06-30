@@ -51,13 +51,13 @@ export default function StyleGuide() {
   return (
     <div className="mx-auto max-w-5xl px-4 pb-20">
       <header className="py-10">
-        <p className="text-sm text-crimson">Design system · §4</p>
+        <p className="text-sm text-crimson">Design system</p>
         <h1 className="font-display text-4xl font-semibold text-ink">
           Style guide
         </h1>
         <p className="mt-2 max-w-xl text-ink-soft">
-          Eyeball the tokens and components here before any feature work. Toggle
-          dark mode from the header — every block below should hold up.
+          Tokens and components in one place. Toggle dark mode from the header —
+          every block below holds up in both.
         </p>
       </header>
 
