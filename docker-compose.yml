@@ -1,0 +1,23 @@
+# Local dev database only. Production uses Hostinger MySQL (see README).
+# Start with:  docker compose up -d
+# Then point .env DATABASE_URL at it:
+#   mysql://root:jrfpass@127.0.0.1:3306/jobroomfinder
+services:
+  db:
+    image: mariadb:11 # MySQL-compatible; matches Hostinger's MySQL for dev
+    container_name: jrf-mysql
+    environment:
+      MARIADB_ROOT_PASSWORD: jrfpass
+      MARIADB_DATABASE: jobroomfinder
+    ports:
+      - "3306:3306"
+    volumes:
+      - jrf-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-uroot", "-pjrfpass", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  jrf-db-data:

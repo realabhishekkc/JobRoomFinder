@@ -1,0 +1,236 @@
+// JobRoomFinder — Prisma schema (§5)
+//
+// Primary target: MySQL (Hostinger Business). Kept portable so we can swap to
+// Postgres/Neon by changing the provider and re-migrating — no MySQL-only
+// features, money stored as integer cents, cuid() ids, native enums only.
+//
+// Post model decision: a single shared `Post` with nullable job/room fields
+// (not separate JobDetail/RoomDetail tables). Justification: the board's
+// default view is one mixed feed sorted by recency with cross-type filters and
+// pagination — a single table means one indexed query with no joins on every
+// read (kinder to patchy mobile + shared MySQL). The per-type field sets are
+// small; required-by-type is enforced at the app layer (Zod + composer).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------- Enums -------------------------------------
+
+enum UserStatus {
+  active
+  restricted
+  banned
+}
+
+enum UserRole {
+  member
+  admin
+}
+
+enum Lang {
+  en
+  ne
+}
+
+enum PostType {
+  job
+  room
+}
+
+enum PostStatus {
+  live
+  expired
+  removed
+}
+
+enum ContactMethod {
+  phone
+  viber
+  whatsapp
+}
+
+enum PayType {
+  hourly
+  weekly
+  fixed
+}
+
+enum RoomType {
+  private
+  shared
+  master
+  granny_flat // rendered as "Granny flat" in the UI
+}
+
+enum BoostStatus {
+  pending
+  active
+  expired
+  cancelled
+}
+
+enum SponsorStatus {
+  pending
+  active
+  expired
+}
+
+enum SponsorPlacement {
+  home_top_banner
+}
+
+enum ReportStatus {
+  open
+  reviewed
+  dismissed
+}
+
+// ----------------------------- Models ------------------------------------
+
+model User {
+  id              String     @id @default(cuid())
+  phone           String     @unique // E.164, e.g. +61412345678
+  displayName     String
+  status          UserStatus @default(active)
+  role            UserRole   @default(member)
+  preferredLang   Lang       @default(en)
+  // Rolling 3-per-day post limit (§7)
+  dailyPostCount  Int        @default(0)
+  lastPostResetAt DateTime?
+  createdAt       DateTime   @default(now())
+
+  posts       Post[]
+  savedPosts  SavedPost[]
+  alerts      PostAlert[]
+  flags       ModerationFlag[]
+  reports     Report[]         @relation("ReporterReports")
+
+  @@index([status])
+}
+
+model Post {
+  id          String        @id @default(cuid())
+  type        PostType
+  authorId    String
+  author      User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  title       String
+  description String        @db.Text
+  suburb      String
+  state       String // AU state/territory, e.g. NSW, VIC
+  status      PostStatus    @default(live)
+  viewCount   Int           @default(0)
+  contactMethod ContactMethod
+  contactValue  String
+
+  // Job-only fields (null for rooms)
+  payRate String?
+  payType PayType?
+
+  // Room-only fields (null for jobs)
+  weeklyRentCents Int?
+  roomType        RoomType?
+  billsIncluded   Boolean?
+
+  createdAt DateTime  @default(now())
+  expiresAt DateTime // default +30 days, set in app
+
+  boosts  Boost[]
+  savedBy SavedPost[]
+  reports Report[]
+
+  // Feed reads filter by type+status and sort by createdAt; location search.
+  @@index([status, type, createdAt])
+  @@index([state, suburb])
+  @@index([authorId])
+}
+
+model Boost {
+  id             String      @id @default(cuid())
+  postId         String
+  post           Post        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  startsAt       DateTime    @default(now())
+  endsAt         DateTime // +3 days
+  stripeSessionId String?    @unique
+  status         BoostStatus @default(pending)
+  createdAt      DateTime    @default(now())
+
+  @@index([postId])
+  @@index([status, endsAt])
+}
+
+model Sponsor {
+  id              String           @id @default(cuid())
+  businessName    String
+  contactEmail    String
+  websiteUrl      String
+  tagline         String?
+  logoUrl         String?
+  bannerImageUrl  String?
+  startsAt        DateTime         @default(now())
+  endsAt          DateTime // +7 days
+  stripeSessionId String?          @unique
+  status          SponsorStatus    @default(pending)
+  placement       SponsorPlacement @default(home_top_banner)
+  createdAt       DateTime         @default(now())
+
+  @@index([status, endsAt])
+}
+
+model SavedPost {
+  userId    String
+  postId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, postId])
+  @@index([postId])
+}
+
+model PostAlert {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // null typeFilter = both jobs and rooms
+  typeFilter     PostType?
+  // free-text suburb/state match, e.g. "Rockdale" or "NSW"
+  locationFilter String?
+  lang           Lang      @default(en)
+  createdAt      DateTime  @default(now())
+  lastNotifiedAt DateTime?
+
+  @@index([userId])
+}
+
+model ModerationFlag {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // The attempt, with matched terms redacted before storage (no raw slurs).
+  postAttemptText String   @db.Text
+  // Redacted/hashed matched terms — never store raw slurs in plain text/logs.
+  matchedTerms    String
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Report {
+  id         String       @id @default(cuid())
+  postId     String
+  post       Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reporterId String
+  reporter   User         @relation("ReporterReports", fields: [reporterId], references: [id], onDelete: Cascade)
+  reason     String
+  status     ReportStatus @default(open)
+  createdAt  DateTime     @default(now())
+
+  @@unique([postId, reporterId]) // one report per user per post
+  @@index([postId])
+}

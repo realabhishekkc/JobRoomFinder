@@ -33,3 +33,6 @@ yarn-error.log*
 
 # prisma local db (if used for quick dev)
 *.db
+
+# local-only Prisma engines (downloaded via curl; CI/prod fetch their own)
+/.prisma-engines/
